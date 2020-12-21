@@ -1,0 +1,8 @@
+supervalidator.form:
+  path: '/supervalidator'
+  defaults:
+    _form: '\Drupal\supervalidator\Form\SuperForm'
+    _title: 'Yuraul SuperForm'
+  requirements:
+    _permission: 'access content'
+

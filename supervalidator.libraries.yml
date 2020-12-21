@@ -1,0 +1,7 @@
+form:
+  version: 1.0
+  css:
+    layout:
+      css/form.css: {}
+  js:
+    js/form.js: {}

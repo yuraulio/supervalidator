@@ -1,0 +1,8 @@
+supervalidator.mainpage:
+  title: 'Supervalidator'
+  description: 'Yuraul SuperForm'
+  parent: main
+  route_name: supervalidator.form
+  menu_name: main
+  weight: 100
+
