@@ -2,6 +2,8 @@ form:
   version: 1.0
   css:
     layout:
-      css/form.css: {}
+      css/superform.css: {}
   js:
-    js/form.js: {}
+    js/superform.js: {}
+  dependencies:
+    - core/jquery
