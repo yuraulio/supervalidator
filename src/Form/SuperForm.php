@@ -18,28 +18,37 @@ class SuperForm extends FormBase {
   }
 
 
-  protected function buildYear($year_value) {
-    $year[$year_value][$year_value] = 1;
+  protected function buildYear($year_value, &$header) {
+    foreach ($header as $item) {
+      $year[$year_value][$item]['#attributes'] = [
+        'class' => [
+          'table-cell-data',
+        ],
+      ];
+      $year[$year_value][$item]['input'] = [
+        '#type' => 'textfield',
+        '#size' => 5,
+      ];
+    }
+
+    return $year;
   }
 
   protected function buildHeader() {
-    // Generate array with the months numbers and names.
-    $months = [];
-    for ($i = 0; $i < 12; $i++) {
-      $timestamp = mktime(0, 0, 0, $i + 1, 1);
-      $months[date('n', $timestamp)] = date('M', $timestamp);
-    }
     // Add the year column title.
     $header[] = 'Year';
+
     // Fill the header array with the month names and
     // names of the quarters of the year.
-    foreach ($months as $month_num => $month_name) {
-      $header[] = $month_name;
+    for ($i = 1; $i < 13; $i++) {
+      $timestamp = mktime(0, 0, 0, $i, 1);
+      $header[] = date('M', $timestamp);
       // After each of 3 month add the appropriate quarter title.
-      if ($month_num % 3 == 0) {
-        $header[] = 'Q' . intdiv($month_num, 3);
+      if ($i % 3 == 0) {
+        $header[] = 'Q' . intdiv($i, 3);
       }
     }
+
     // Add the year summary column title.
     $header[] = 'YTD';
 
@@ -47,28 +56,22 @@ class SuperForm extends FormBase {
   }
 
   protected function buildTable($table_num) {
-    $table = [
+    $table['table_fieldset'] = [
+      '#type' => 'fieldset',
+      '#prefix' => '<div id="table-fieldset-wrapper">',
+      '#suffix' => '</div>',
+    ];
+    $table['table_fieldset'][$table_num] = [
       '#type' => 'table',
       '#caption' => $this
         ->t('Table #@table_number', ['@table_number' => $table_num]),
       '#header' => $this->buildHeader(),
       '#sticky' => TRUE,
     ];
-    foreach ($table['#header'] as $title) {
-      $table[$table_num]['2020'][$title]['#attributes'] = [
-        'class' => [
-          'table-cell-data',
-        ],
-      ];
-      $table['2020'][$title]['input'] = [
-        '#type' => 'textfield',
-        '#size' => 5,
-      ];
-    }
 
+    $table['table_fieldset'][$table_num] += $this->
+      buildYear(2020, $table['table_fieldset'][$table_num]['#header']);
     return $table;
-//    $table = [];
-//    $table += buildYear($year_value);
   }
 
   public function buildForm(array $form, FormStateInterface $form_state, $post = FALSE) {
