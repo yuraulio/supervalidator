@@ -17,18 +17,58 @@ class SuperForm extends FormBase {
     return 'super_form';
   }
 
+  public function buildForm(array $form, FormStateInterface $form_state, $post = FALSE) {
+    // Gather the number of names in the form already.
+    $num_names = $form_state->get('num_names');
+    // We have to ensure that there is at least one name field.
+    if ($num_names === NULL) {
+      $name_field = $form_state->set('num_names', 1);
+      $num_names = 1;
+    }
+    $form['#tree'] = TRUE;
+    // Attaching style and JS to the form.
+    $form[] = ['#attached' => ['library' => ['supervalidator/form']]];
+
+    $form['tables'] = $this->buildTable(1);
+
+    $form['actions']['add_table'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Add table'),
+      '#submit' => ['::addOne'],
+      '#ajax' => [
+        'callback' => '::addmoreCallback',
+        'wrapper' => 'table-fieldset-wrapper',
+      ],
+    ];
+
+    $form['actions']['submit'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Submit'),
+    ];
+
+    return $form;
+  }
 
   protected function buildYear($year_value, &$header) {
-    foreach ($header as $item) {
-      $year[$year_value][$item]['#attributes'] = [
+    foreach ($header as $title) {
+      $year[$year_value][$title]['#attributes'] = [
         'class' => [
           'table-cell-data',
         ],
       ];
-      $year[$year_value][$item]['input'] = [
-        '#type' => 'textfield',
-        '#size' => 5,
-      ];
+      switch ($title) {
+        case 'Year':
+          $year[$year_value][$title]['cell'] = [
+            '#plain_text' => $year_value,
+          ];
+          break;
+
+        default:
+          $year[$year_value][$title]['cell'] = [
+            '#type' => 'textfield',
+            '#size' => 5,
+          ];
+      }
     }
 
     return $year;
@@ -56,112 +96,52 @@ class SuperForm extends FormBase {
   }
 
   protected function buildTable($table_num) {
-    $table['table_fieldset'] = [
+    $table['table'] = [
       '#type' => 'fieldset',
+      '#title' => $this->t('Table #@table_number', ['@table_number' => $table_num]),
       '#prefix' => '<div id="table-fieldset-wrapper">',
       '#suffix' => '</div>',
     ];
-    $table['table_fieldset'][$table_num] = [
+
+    $table['table']['actions'] = [
+      '#type' => 'actions',
+      '#weight' => -100,
+    ];
+
+    $table['table']['actions']['add_year'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Add year'),
+      '#submit' => ['::addOne'],
+      '#ajax' => [
+        'callback' => '::addmoreCallback',
+        'wrapper' => 'table-fieldset-wrapper',
+      ],
+    ];
+
+    // If there is more than one name, add the remove button.
+//    if ($num_names > 1) {
+//      $form['names_fieldset']['actions']['remove_year'] = [
+//        '#type' => 'submit',
+//        '#value' => $this->t('Remove year'),
+//        '#submit' => ['::removeCallback'],
+//        '#ajax' => [
+//          'callback' => '::addmoreCallback',
+//          'wrapper' => 'table-fieldset-wrapper',
+//        ],
+//      ];
+//    }
+
+    $table['table'][$table_num] = [
       '#type' => 'table',
-      '#caption' => $this
-        ->t('Table #@table_number', ['@table_number' => $table_num]),
+//      '#caption' => $this
+//        ->t('Table #@table_number', ['@table_number' => $table_num]),
       '#header' => $this->buildHeader(),
       '#sticky' => TRUE,
     ];
 
-    $table['table_fieldset'][$table_num] += $this->
-      buildYear(2020, $table['table_fieldset'][$table_num]['#header']);
+    $table['table'][$table_num] += $this->
+      buildYear(2020, $table['table'][$table_num]['#header']);
     return $table;
-  }
-
-  public function buildForm(array $form, FormStateInterface $form_state, $post = FALSE) {
-    $form['#tree'] = TRUE;
-
-//    $form['name'][1]['first'] = [
-//      '#type' => 'textfield',
-//      '#title' => $this->t('Value'),
-//    ];
-//
-//    $form['name'][1]['last'] = [
-//      '#type' => 'textfield',
-//      '#title' => $this->t('Value'),
-//    ];
-//
-//    $form['name'][2]['first'] = [
-//      '#type' => 'textfield',
-//      '#title' => $this->t('Value'),
-//    ];
-//
-//    $form['name'][2]['last'] = [
-//      '#type' => 'textfield',
-//      '#title' => $this->t('Value'),
-//    ];
-
-//    $form['value'] = [
-//      '#type' => 'textfield',
-//      '#title' => $this->t('Value'),
-//      '#required' => FALSE,
-//    ];
-
-//    $form['actions']['add'] = [
-//      '#type' => 'button',
-//      '#value' => $this
-//        ->t('Add row'),
-//    ];
-//
-//    $form['actions']['submit'] = [
-//      '#type' => 'submit',
-//      '#name' => 'validate',
-//      '#button_type' => 'primary',
-//      '#value' => $this->t('Validate it!'),
-//    ];
-
-    // Attaching style and JS to the form.
-//    $form[] = ['#attached' => ['library' => ['supervalidator/form']]];
-//
-//    $form['contacts'] = array(
-//      '#type' => 'table',
-//      '#caption' => $this
-//        ->t('Sample Table'),
-//      '#header' => array(
-//        $this
-//          ->t('Name'),
-//        $this
-//          ->t('Phone'),
-//      ),
-//    );
-//    for ($i = 1; $i <= 4; $i++) {
-//      $form['contacts'][$i]['#attributes'] = array(
-//        'class' => array(
-//          'foo',
-//          'baz',
-//        ),
-//      );
-//      $form['contacts'][$i]['name'] = array(
-//        '#type' => 'textfield',
-//        '#title' => $this
-//          ->t('Name'),
-//        '#title_display' => 'invisible',
-//      );
-//      $form['contacts'][$i]['phone'] = array(
-//        '#type' => 'tel',
-//        '#title' => $this
-//          ->t('Phone'),
-//        '#title_display' => 'invisible',
-//      );
-//    }
-//    $form['contacts'][]['colspan_example'] = array(
-//      '#plain_text' => 'Colspan Example',
-//      '#wrapper_attributes' => array(
-//        'colspan' => 2,
-//        'class' => array(
-//          'foo',
-//          'bar',
-//        ),
-//      ),
-//    );
-    $form[] = $this->buildTable(1);
-    return $form;
   }
 
   public function validateForm(array &$form, FormStateInterface $form_state) {
