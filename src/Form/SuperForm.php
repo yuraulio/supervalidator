@@ -23,13 +23,14 @@ class SuperForm extends FormBase {
     $form['#attached'] = ['library' => ['supervalidator/form']];
 
     // Gather the current form structure state.
-    $tables_state = $form_state->getValues()['tables'][1]['rows'] ?? NULL;
+    $tables_state = $form_state->getValues()['tables'] ?? NULL;
     // We have to ensure that there is at least one name field.
     if ($tables_state === NULL) {
       $years_list = [date('Y')];
-      $tables_count = 2;
+      $tables_count = 1;
     }
     else {
+      $button = $form_state->getTriggeringElement()['#name'];
       $years_list = array_keys($tables_state);
       $min = min($years_list);
       array_unshift($years_list, $min - 1);
@@ -37,6 +38,16 @@ class SuperForm extends FormBase {
     for ($i = 1; $i <= $tables_count; $i++) {
       $form['tables'][$i] = $this->buildTable($i, $years_list);
     }
+
+    $form['actions']['add_table'] = [
+      '#type' => 'button',
+      '#name' => 'addTable',
+      '#value' => $this->t('Add table'),
+      '#submit' => ['::addOne'],
+      '#ajax' => [
+        'callback' => '::addmoreCallback',
+      ],
+    ];
 
     $form['actions']['submit'] = [
       '#type' => 'submit',
