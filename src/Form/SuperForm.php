@@ -17,35 +17,20 @@ class SuperForm extends FormBase {
     return 'super_form';
   }
 
-  public function buildForm(array $form, FormStateInterface $form_state, $post = FALSE) {
-//    // Gather the current form structure state.
-//    $tables_state = $form_state->get('tables_state');
-//    // We have to ensure that there is at least one name field.
-//    if ($tables_state === NULL) {
-//      $tables_state = [
-//        0 => [
-//          'years' => [
-//            0 => date('Y'),
-//          ],
-//        ],
-//      ];
-//      $form_state->set('tables_state', $tables_state);
-//    }
+  public function buildForm(array $form, FormStateInterface $form_state) {
     $form['#tree'] = TRUE;
     // Attaching style and JS to the form.
     $form['#attached'] = ['library' => ['supervalidator/form']];
 
-    $form['tables'] = $this->buildTable(1);
-
-    $form['actions']['add_table'] = [
-      '#type' => 'submit',
-      '#value' => $this->t('Add table'),
-      '#submit' => ['::addOne'],
-      '#ajax' => [
-        'callback' => '::addmoreCallback',
-        'wrapper' => 'table-fieldset-wrapper',
-      ],
-    ];
+    // Gather the current form structure state.
+    $tables_state = $form_state->getValues();
+    $years_list = array_keys($tables_state['tables'][1]['table']);
+    // We have to ensure that there is at least one name field.
+    if ($tables_state === NULL) {
+      $tables_state = 1;
+    }
+    array_unshift($years_list, '2017');
+    $form['tables'] = $this->buildTable(1, $years_list);
 
     $form['actions']['submit'] = [
       '#type' => 'submit',
@@ -55,22 +40,30 @@ class SuperForm extends FormBase {
     return $form;
   }
 
+  public function addOne(array &$form, FormStateInterface $form_state) {
+    $form_state->setRebuild();
+  }
+
+  public function addmoreCallback(array &$form, FormStateInterface $form_state) {
+    return $form['tables'];
+  }
+
   protected function buildYear($year_value, &$header) {
     foreach ($header as $title) {
-      $year[$year_value][0][$title]['#attributes'] = [
+      $year[$year_value][$title]['#attributes'] = [
         'class' => [
           'table-cell-data',
         ],
       ];
       switch ($title) {
         case 'Year':
-          $year[$year_value][$title]['cell'] = [
+          $year[$year_value][$title] = [
             '#plain_text' => $year_value,
           ];
           break;
 
         default:
-          $year[$year_value][$title]['cell'] = [
+          $year[$year_value][$title] = [
             '#type' => 'textfield',
             '#size' => 5,
           ];
@@ -101,7 +94,7 @@ class SuperForm extends FormBase {
     return $header;
   }
 
-  protected function buildTable($table_num) {
+  protected function buildTable($table_num, $years_list) {
     $table[$table_num] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Table #@table_number', ['@table_number' => $table_num]),
@@ -124,29 +117,19 @@ class SuperForm extends FormBase {
       ],
     ];
 
-    // If there is more than one name, add the remove button.
-//    if ($num_names > 1) {
-//      $form['names_fieldset']['actions']['remove_year'] = [
-//        '#type' => 'submit',
-//        '#value' => $this->t('Remove year'),
-//        '#submit' => ['::removeCallback'],
-//        '#ajax' => [
-//          'callback' => '::addmoreCallback',
-//          'wrapper' => 'table-fieldset-wrapper',
-//        ],
-//      ];
-//    }
-
     $table[$table_num]['table'] = [
       '#type' => 'table',
 //      '#caption' => $this
 //        ->t('Table #@table_number', ['@table_number' => $table_num]),
       '#header' => $this->buildHeader(),
       '#sticky' => TRUE,
+      '#header_columns' => 18,
     ];
 
-    $table[$table_num]['table']['years'] = $this
-      ->buildYear(2020, $table[$table_num]['table']['#header']);
+    foreach ($years_list as $year_value) {
+      $table[$table_num]['table'] += $this
+        ->buildYear($year_value, $table[$table_num]['table']['#header']);
+    }
     return $table;
   }
 
@@ -154,6 +137,8 @@ class SuperForm extends FormBase {
 //    if ($form_state->getValue('value') != 'OK') {
 //      $form_state->setErrorByName('value', $this->t('Invalid.'));
 //    }
+    $v = $form_state->getValues();
+    $v = 0;
   }
 
   public function submitForm(array &$form, FormStateInterface $form_state) {
