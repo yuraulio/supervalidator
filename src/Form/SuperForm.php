@@ -23,13 +23,16 @@ class SuperForm extends FormBase {
     $form['#attached'] = ['library' => ['supervalidator/form']];
 
     // Gather the current form structure state.
-    $tables_state = $form_state->getValues();
-    $years_list = array_keys($tables_state['tables'][1]['table']);
+    $tables_state = $form_state->getValues()['tables'][1]['table'] ?? NULL;
     // We have to ensure that there is at least one name field.
     if ($tables_state === NULL) {
-      $tables_state = 1;
+      $years_list = [date('Y')];
     }
-    array_unshift($years_list, '2017');
+    else {
+      $years_list = array_keys($tables_state);
+      $min = min($years_list);
+      array_unshift($years_list, $min - 1);
+    }
     $form['tables'] = $this->buildTable(1, $years_list);
 
     $form['actions']['submit'] = [
