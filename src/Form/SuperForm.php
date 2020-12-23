@@ -18,16 +18,22 @@ class SuperForm extends FormBase {
   }
 
   public function buildForm(array $form, FormStateInterface $form_state, $post = FALSE) {
-    // Gather the number of names in the form already.
-    $num_names = $form_state->get('num_names');
-    // We have to ensure that there is at least one name field.
-    if ($num_names === NULL) {
-      $name_field = $form_state->set('num_names', 1);
-      $num_names = 1;
-    }
+//    // Gather the current form structure state.
+//    $tables_state = $form_state->get('tables_state');
+//    // We have to ensure that there is at least one name field.
+//    if ($tables_state === NULL) {
+//      $tables_state = [
+//        0 => [
+//          'years' => [
+//            0 => date('Y'),
+//          ],
+//        ],
+//      ];
+//      $form_state->set('tables_state', $tables_state);
+//    }
     $form['#tree'] = TRUE;
     // Attaching style and JS to the form.
-    $form[] = ['#attached' => ['library' => ['supervalidator/form']]];
+    $form['#attached'] = ['library' => ['supervalidator/form']];
 
     $form['tables'] = $this->buildTable(1);
 
@@ -51,7 +57,7 @@ class SuperForm extends FormBase {
 
   protected function buildYear($year_value, &$header) {
     foreach ($header as $title) {
-      $year[$year_value][$title]['#attributes'] = [
+      $year[$year_value][0][$title]['#attributes'] = [
         'class' => [
           'table-cell-data',
         ],
@@ -96,19 +102,19 @@ class SuperForm extends FormBase {
   }
 
   protected function buildTable($table_num) {
-    $table['table'] = [
+    $table[$table_num] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Table #@table_number', ['@table_number' => $table_num]),
       '#prefix' => '<div id="table-fieldset-wrapper">',
       '#suffix' => '</div>',
     ];
 
-    $table['table']['actions'] = [
+    $table[$table_num]['actions'] = [
       '#type' => 'actions',
       '#weight' => -100,
     ];
 
-    $table['table']['actions']['add_year'] = [
+    $table[$table_num]['actions']['add_year'] = [
       '#type' => 'submit',
       '#value' => $this->t('Add year'),
       '#submit' => ['::addOne'],
@@ -131,7 +137,7 @@ class SuperForm extends FormBase {
 //      ];
 //    }
 
-    $table['table'][$table_num] = [
+    $table[$table_num]['table'] = [
       '#type' => 'table',
 //      '#caption' => $this
 //        ->t('Table #@table_number', ['@table_number' => $table_num]),
@@ -139,8 +145,8 @@ class SuperForm extends FormBase {
       '#sticky' => TRUE,
     ];
 
-    $table['table'][$table_num] += $this->
-      buildYear(2020, $table['table'][$table_num]['#header']);
+    $table[$table_num]['table']['years'] = $this
+      ->buildYear(2020, $table[$table_num]['table']['#header']);
     return $table;
   }
 
