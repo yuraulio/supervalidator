@@ -21,31 +21,60 @@ class SuperForm extends FormBase {
     $form['#tree'] = TRUE;
     // Attaching style and JS to the form.
     $form['#attached'] = ['library' => ['supervalidator/form']];
+    $form['#attributes'] = [
+      'id' => $this->getFormId(),
+    ];
 
     // Gather the current form structure state.
     $tables_state = $form_state->getValues()['tables'] ?? NULL;
+    $button = $form_state->getTriggeringElement()['#name'] ?? '';
+    $table_to_add = FALSE;
+
     // We have to ensure that there is at least one name field.
     if ($tables_state === NULL) {
-      $years_list = [date('Y')];
       $tables_count = 1;
     }
     else {
-      $button = $form_state->getTriggeringElement()['#name'];
-      $years_list = array_keys($tables_state);
-      $min = min($years_list);
-      array_unshift($years_list, $min - 1);
+      $tables_count = count($tables_state);
+    }
+    $what_to_do = substr($button, 0, -1);
+    switch ($what_to_do) {
+      case 'addTable':
+        $tables_count++;
+        break;
+
+      case 'addYear':
+        $table_to_add = substr($button, -1);
     }
     for ($i = 1; $i <= $tables_count; $i++) {
+      $years_list = isset($tables_state[$i]) ? array_keys($tables_state[$i]['rows']) : [date('Y')];
+//      if ($tables_state) {
+//        $years_list = array_keys($tables_state[$i]['rows']);
+//      }
+//      else {
+//        $years_list = [date('Y')];
+//      }
+      if ($table_to_add == $i) {
+        $min = min($years_list);
+        array_unshift($years_list, $min - 1);
+      }
       $form['tables'][$i] = $this->buildTable($i, $years_list);
     }
 
     $form['actions']['add_table'] = [
       '#type' => 'button',
-      '#name' => 'addTable',
+      '#name' => 'addTable1',
       '#value' => $this->t('Add table'),
       '#submit' => ['::addOne'],
       '#ajax' => [
         'callback' => '::addmoreCallback',
+        'wrapper' => 'super_form',
+        'progress' => [
+          'type' => 'throbber',
+          'message' => 'Adding a table...',
+        ],
+        'effect' => 'slide',
+        'speed' => 800,
       ],
     ];
 
@@ -63,16 +92,11 @@ class SuperForm extends FormBase {
   }
 
   public function addmoreCallback(array &$form, FormStateInterface $form_state) {
-    return $form['tables'];
+    return $form;
   }
 
   protected function buildYear($year_value, &$header) {
     foreach ($header as $title) {
-      $year[$year_value][$title]['#attributes'] = [
-        'class' => [
-          'table-cell-data',
-        ],
-      ];
       switch ($title) {
         case 'Year':
           $year[$year_value][$title] = [
@@ -86,6 +110,11 @@ class SuperForm extends FormBase {
             '#size' => 4,
           ];
       }
+      $year[$year_value][$title]['#attributes'] = [ // TODO: Check if necessary.
+        'class' => [
+          strtolower($title),
+        ],
+      ];
     }
 
     return $year;
@@ -132,7 +161,13 @@ class SuperForm extends FormBase {
       '#submit' => ['::addOne'],
       '#ajax' => [
         'callback' => '::addmoreCallback',
-        'wrapper' => 'table-fieldset-wrapper',
+        'wrapper' => 'super_form',
+        'progress' => [
+          'type' => 'throbber',
+          'message' => 'Adding a year...',
+        ],
+        'effect' => 'slide',
+        'speed' => 800,
       ],
     ];
 
@@ -148,6 +183,9 @@ class SuperForm extends FormBase {
     foreach ($years_list as $year_value) {
       $table['rows'] += $this
         ->buildYear($year_value, $table['rows']['#header']);
+      $table['rows'][$year_value]['#attributes'] = [
+        'id' => "$table_num-$year_value",
+      ];
     }
     return $table;
   }
