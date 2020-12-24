@@ -17,6 +17,100 @@ class SuperForm extends FormBase {
     return 'super_form';
   }
 
+  protected function buildHeader() {
+    // Add the year column title.
+    $header[] = 'Year';
+
+    // Fill the header array with the month names and
+    // names of the quarters of the year.
+    for ($i = 1; $i < 13; $i++) {
+      $timestamp = mktime(0, 0, 0, $i, 1);
+      $header[] = date('M', $timestamp);
+      // After each of 3 month add the appropriate quarter title.
+      if ($i % 3 == 0) {
+        $header[] = 'Q' . intdiv($i, 3);
+      }
+    }
+
+    // Add the year summary column title.
+    $header[] = 'YTD';
+
+    return $header;
+  }
+
+  protected function buildYear($year_value, &$header) {
+    foreach ($header as $title) {
+      switch ($title) {
+        case 'Year':
+          $year[$year_value][$title] = [
+            '#plain_text' => $year_value,
+          ];
+          break;
+
+        default:
+          $year[$year_value][$title] = [
+            '#type' => 'number',
+            '#min' => 0,
+            '#step' => 0.01,
+          ];
+      }
+      $year[$year_value][$title]['#attributes'] = [ // TODO: Check if necessary.
+        'class' => [
+          strtolower($title),
+        ],
+      ];
+    }
+
+    return $year;
+  }
+
+  protected function buildTable($table_num, $years_list) {
+    $table = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Table #@table_number', ['@table_number' => $table_num]),
+      '#prefix' => '<div id="table-fieldset-wrapper">',
+      '#suffix' => '</div>',
+    ];
+
+    $table['actions'] = [
+      '#type' => 'actions',
+      '#weight' => -100,
+    ];
+
+    $table['actions']['add_year'] = [
+      '#type' => 'button',
+      '#name' => 'addYear' . $table_num,
+      '#value' => $this->t('Add year'),
+      '#submit' => ['::addOne'],
+      '#ajax' => [
+        'callback' => '::addmoreCallback',
+        'wrapper' => 'super_form',
+        'progress' => [
+          'type' => 'throbber',
+          'message' => 'Adding a year...',
+        ],
+        'effect' => 'slide',
+        'speed' => 800,
+      ],
+    ];
+
+    $table['rows'] = [
+      '#type' => 'table',
+      '#header' => $this->buildHeader(),
+      '#sticky' => TRUE,
+      '#header_columns' => 18,
+    ];
+
+    foreach ($years_list as $year_value) {
+      $table['rows'] += $this
+        ->buildYear($year_value, $table['rows']['#header']);
+      $table['rows'][$year_value]['#attributes'] = [
+        'id' => "$table_num-$year_value",
+      ];
+    }
+    return $table;
+  }
+
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['#tree'] = TRUE;
     // Attaching style and JS to the form.
@@ -37,8 +131,8 @@ class SuperForm extends FormBase {
     else {
       $tables_count = count($tables_state);
     }
-    $what_to_do = substr($button, 0, -1);
-    switch ($what_to_do) {
+
+    switch (substr($button, 0, -1)) {
       case 'addTable':
         $tables_count++;
         break;
@@ -48,12 +142,7 @@ class SuperForm extends FormBase {
     }
     for ($i = 1; $i <= $tables_count; $i++) {
       $years_list = isset($tables_state[$i]) ? array_keys($tables_state[$i]['rows']) : [date('Y')];
-//      if ($tables_state) {
-//        $years_list = array_keys($tables_state[$i]['rows']);
-//      }
-//      else {
-//        $years_list = [date('Y')];
-//      }
+
       if ($table_to_add == $i) {
         $min = min($years_list);
         array_unshift($years_list, $min - 1);
@@ -95,106 +184,8 @@ class SuperForm extends FormBase {
     return $form;
   }
 
-  protected function buildYear($year_value, &$header) {
-    foreach ($header as $title) {
-      switch ($title) {
-        case 'Year':
-          $year[$year_value][$title] = [
-            '#plain_text' => $year_value,
-          ];
-          break;
-
-        default:
-          $year[$year_value][$title] = [
-            '#type' => 'textfield',
-            '#size' => 4,
-          ];
-      }
-      $year[$year_value][$title]['#attributes'] = [ // TODO: Check if necessary.
-        'class' => [
-          strtolower($title),
-        ],
-      ];
-    }
-
-    return $year;
-  }
-
-  protected function buildHeader() {
-    // Add the year column title.
-    $header[] = 'Year';
-
-    // Fill the header array with the month names and
-    // names of the quarters of the year.
-    for ($i = 1; $i < 13; $i++) {
-      $timestamp = mktime(0, 0, 0, $i, 1);
-      $header[] = date('M', $timestamp);
-      // After each of 3 month add the appropriate quarter title.
-      if ($i % 3 == 0) {
-        $header[] = 'Q' . intdiv($i, 3);
-      }
-    }
-
-    // Add the year summary column title.
-    $header[] = 'YTD';
-
-    return $header;
-  }
-
-  protected function buildTable($table_num, $years_list) {
-    $table = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Table #@table_number', ['@table_number' => $table_num]),
-      '#prefix' => '<div id="table-fieldset-wrapper">',
-      '#suffix' => '</div>',
-    ];
-
-    $table['actions'] = [
-      '#type' => 'actions',
-      '#weight' => -100,
-    ];
-
-    $table['actions']['add_year'] = [
-      '#type' => 'button',
-      '#name' => 'addYear' . $table_num,
-      '#value' => $this->t('Add year'),
-      '#submit' => ['::addOne'],
-      '#ajax' => [
-        'callback' => '::addmoreCallback',
-        'wrapper' => 'super_form',
-        'progress' => [
-          'type' => 'throbber',
-          'message' => 'Adding a year...',
-        ],
-        'effect' => 'slide',
-        'speed' => 800,
-      ],
-    ];
-
-    $table['rows'] = [
-      '#type' => 'table',
-//      '#caption' => $this
-//        ->t('Table #@table_number', ['@table_number' => $table_num]),
-      '#header' => $this->buildHeader(),
-      '#sticky' => TRUE,
-      '#header_columns' => 18,
-    ];
-
-    foreach ($years_list as $year_value) {
-      $table['rows'] += $this
-        ->buildYear($year_value, $table['rows']['#header']);
-      $table['rows'][$year_value]['#attributes'] = [
-        'id' => "$table_num-$year_value",
-      ];
-    }
-    return $table;
-  }
-
   public function validateForm(array &$form, FormStateInterface $form_state) {
-//    if ($form_state->getValue('value') != 'OK') {
-//      $form_state->setErrorByName('value', $this->t('Invalid.'));
-//    }
-    $v = $form_state->getTriggeringElement()['#name'];
+    $v = $form_state->getValues();
     $v = 0;
   }
 
