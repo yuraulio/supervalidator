@@ -39,7 +39,12 @@ class SuperForm extends FormBase {
   }
 
   protected function buildYear($year_value, &$header) {
-    foreach ($header as $title) {
+    foreach ($header as $key => $title) {
+      $year[$year_value][$title] = [
+        '#type' => 'number',
+        '#min' => 0,
+        '#step' => 0.01,
+      ];
       switch ($title) {
         case 'Year':
           $year[$year_value][$title] = [
@@ -47,18 +52,26 @@ class SuperForm extends FormBase {
           ];
           break;
 
+        case 'Q1':
+        case 'Q2':
+        case 'Q3':
+        case 'Q4':
+          $year[$year_value][$title]['#attributes'] = [
+            'class' => ['quarter'],
+          ];
+          break;
+
+        case 'YTD':
+          $year[$year_value][$title]['#attributes'] = [
+            'class' => ['year'],
+          ];
+          break;
+
         default:
-          $year[$year_value][$title] = [
-            '#type' => 'number',
-            '#min' => 0,
-            '#step' => 0.01,
+          $year[$year_value][$title]['#attributes'] = [
+            'class' => [$key . ' data'],
           ];
       }
-      $year[$year_value][$title]['#attributes'] = [ // TODO: Check if necessary.
-        'class' => [
-          strtolower($title),
-        ],
-      ];
     }
 
     return $year;

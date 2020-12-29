@@ -1,23 +1,39 @@
-// (function ($, Drupal) {
-//   Drupal.behaviors.addNewField = {
-//     attach: function (context, settings) {
-//
-//       let add_button = $("#edit-add"); //Add button ID
-//       $(add_button).on('click', function (event) {
-//         event.preventDefault();
-//         console.log('I am working!');
-//         let max_fields = 10; //maximum input boxes allowed
-//         let wrapper = $("super-form"); //Fields wrapper
-//         $(wrapper).append("<p>I am Added!</p>"); //add input box
-//       });
-//     }
-//   };
-//   // $(wrapper).on("click",".remove_field", function(e){ //user click on remove text
-//   //   e.preventDefault(); $(this).parent('div').remove(); x--;
-//   // })
-// })(jQuery, Drupal);
+(function ($, Drupal) {
+  Drupal.behaviors.summary = {
+    attach: function (context, settings) {
+      let changed_cell = $("#super_form tr td input");
+      $(changed_cell).once('summary').on('change', function (event) {
+        let element = $(event.target);
+        let cell = element.parent().parent();
+        let index = element.parent().parent().index();
+        function calcTotal(months) {
+          return (months.reduce((a, b) => a + b, 0) + 1) / months.length;
+        }
+        function getQuarterValues(quarter) {
+          let months = [];
+          for (let i = 2; i >= 0; i--) {
+            quarter = quarter.prev();
+            months[i] = parseFloat($($(quarter.children()[0]).children()[0]).val());
+            if (months[i] === "") {
+              months = false;
+              break;
+            }
+          }
+          return months;
+        }
+        if ((index % 4) === 0) {
+          let quarter = parseFloat(element.val());
+          let values = getQuarterValues(element.parent().parent());
+          if (values) {
+            let tmpQuarter = calcTotal(values);
+            if (Math.abs(tmpQuarter - quarter) > 0.05) {
+              alert('Deviation is too big. Value will be set to computed.');
+              element.val(tmpQuarter.toFixed(2));
+            }
+          }
+        }
 
-// <div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-value form-item-value">\n' +
-// '  <label for="edit-value">Value</label>\n' +
-// '  <input data-drupal-selector="edit-value" type="text" name="value" value="" size="60" maxlength="128" class="form-text" />\n' +
-// '</div>
+      });
+    }
+  };
+})(jQuery, Drupal);

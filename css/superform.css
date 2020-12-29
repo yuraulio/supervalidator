@@ -1,7 +1,11 @@
+#super_form fieldset {
+  overflow: scroll;
+}
 #super_form td input {
-  width: 30px;
+  width: 50px;
 }
 
-#super_form td:nth-child(4n+5), td:last-child {
+#super_form tr td:nth-child(4n+5),
+#super_form tr td:last-child {
   background-color: #a7a7a7;
 }
