@@ -19,16 +19,16 @@ class SuperForm extends FormBase {
 
   protected function buildHeader() {
     // Add the year column title.
-    $header[] = 'Year';
+    $header[0] = 'Year';
 
     // Fill the header array with the month names and
     // names of the quarters of the year.
     for ($i = 1; $i < 13; $i++) {
       $timestamp = mktime(0, 0, 0, $i, 1);
-      $header[] = date('M', $timestamp);
+      $header[$i] = date('M', $timestamp);
       // After each of 3 month add the appropriate quarter title.
       if ($i % 3 == 0) {
-        $header[] = 'Q' . intdiv($i, 3);
+        $header['Q' . intdiv($i, 3)] = 'Q' . intdiv($i, 3);
       }
     }
 
@@ -39,6 +39,7 @@ class SuperForm extends FormBase {
   }
 
   protected function buildYear($year_value, &$header) {
+    $year = [];
     foreach ($header as $key => $title) {
       $year[$year_value][$title] = [
         '#type' => 'number',
@@ -68,9 +69,8 @@ class SuperForm extends FormBase {
           break;
 
         default:
-          $year[$year_value][$title]['#attributes'] = [
-            'class' => [$key . ' data'],
-          ];
+          $year[$year_value][$key] = $year[$year_value][$title];
+          unset($year[$year_value][$title]);
       }
     }
 
@@ -198,8 +198,54 @@ class SuperForm extends FormBase {
   }
 
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    $v = $form_state->getValues();
-    $v = 0;
+    $tables = $form_state->getValue('tables');
+
+    foreach ($tables as $table_num => $table) { // Tables.
+      $start = NULL;
+      $end = NULL;
+      $period = FALSE;
+      foreach ($table['rows'] as $year => $months) { // Years.
+        for ($i = 1; $i <= 12; $i++) {  // Months.
+          if ($months[$i] !== '') {
+            if ($period) {
+              $form_state->setError($form['tables'][$table_num]['rows'][$year][$i], 'Invlid!');
+              break(3);
+            }
+            else {
+              if (!$start) {
+                $start = new \DateTime("$year-$i-01");
+                $end = new \DateTime("$year-$i-01");
+              }
+              else {
+                $end->setDate($year, $i, '01');
+              }
+            }
+//            if ($start) {
+//              if ($period) {
+//                $this->messenger()->addError('Interrupted period!');
+//                break(3);
+//              }
+//              else {
+//                $end->setDate($year, $i, '01');
+//              }
+//            }
+//            else {
+//              $start = new \DateTime("$year-$i-01");
+//              $end = $start;
+//            }
+          }
+          else {
+            if ($end) {
+              $period = TRUE;
+            }
+          }
+        }
+      }
+      if ($start && $end) {
+        $this->messenger()->addMessage($start->format('d-M-Y'));
+        $this->messenger()->addMessage($end->format('d-M-Y'));
+      }
+    }
   }
 
   public function submitForm(array &$form, FormStateInterface $form_state) {
