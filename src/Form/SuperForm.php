@@ -199,51 +199,49 @@ class SuperForm extends FormBase {
 
   public function validateForm(array &$form, FormStateInterface $form_state) {
     $tables = $form_state->getValue('tables');
+    $period = [];
 
     foreach ($tables as $table_num => $table) { // Tables.
       $start = NULL;
       $end = NULL;
-      $period = FALSE;
+      $completed = FALSE;
       foreach ($table['rows'] as $year => $months) { // Years.
         for ($i = 1; $i <= 12; $i++) {  // Months.
           if ($months[$i] !== '') {
-            if ($period) {
-              $form_state->setError($form['tables'][$table_num]['rows'][$year][$i], 'Invlid!');
+            if ($completed) {
+              $form_state->setError($form['tables'][$table_num]['rows'][$year][$i], 'Invalid!');
               break(3);
             }
             else {
               if (!$start) {
-                $start = new \DateTime("$year-$i-01");
-                $end = new \DateTime("$year-$i-01");
+                $start = mktime(0, 0, 0, $i, 1, $year);
+                $end = $start;
               }
               else {
-                $end->setDate($year, $i, '01');
+                $end = mktime(0, 0, 0, $i, 1, $year);
               }
             }
-//            if ($start) {
-//              if ($period) {
-//                $this->messenger()->addError('Interrupted period!');
-//                break(3);
-//              }
-//              else {
-//                $end->setDate($year, $i, '01');
-//              }
-//            }
-//            else {
-//              $start = new \DateTime("$year-$i-01");
-//              $end = $start;
-//            }
           }
           else {
             if ($end) {
-              $period = TRUE;
+              $completed = TRUE;
             }
           }
         }
       }
+      if ($period) {
+        if (($period['start'] !== $start) || ($period['end'] !== $end)) {
+          $form_state->setError($form['tables'][$table_num], 'Invalid!');
+          break;
+        }
+      }
+      else {
+        $period['start'] = $start;
+        $period['end'] = $end;
+      }
       if ($start && $end) {
-        $this->messenger()->addMessage($start->format('d-M-Y'));
-        $this->messenger()->addMessage($end->format('d-M-Y'));
+        $this->messenger()->addMessage(date('d-M-Y', $start));
+        $this->messenger()->addMessage(date('d-M-Y', $end));
       }
     }
   }
