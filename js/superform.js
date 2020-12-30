@@ -4,10 +4,10 @@
       $("#super_form tr td input").once('summary').on('change', function (event) {
         let el = $(event.target);
         let cell = el.parent().parent();
-        let elValue = parseFloat(el.val());
+        let elValue = Number(el.val());
         let index = cell.index();
-        function calcTotal(months) {
-          return (months.reduce((a, b) => a + b, 0) + 1) / months.length;
+        function calcTotal(periods) {
+          return (periods.reduce((a, b) => a + b, 0) + 1) / periods.length;
         }
         function getValues() {
           let values = [];
@@ -23,25 +23,14 @@
             } else {
               current = current.prev();
             }
-            values[i] = parseFloat($($(current.children()[0]).children()[0]).val());
-            if (isNaN(values[i])) {
-              values = false;
-              break;
-            }
+            values[i] = Number($($(current.children()[0]).children()[0]).val());
           }
           return values;
         }
         function checkAndSet(values) {
-          if (values) {
-            let tmpTotal = calcTotal(values);
-            if (elValue) {
-              if (Math.abs(tmpTotal - elValue) > 0.05) {
-                alert('Deviation is too big. Value will be set to computed.');
-                el.val(tmpTotal.toFixed(2));
-              }
-            } else {
-              el.val(tmpTotal.toFixed(2));
-            }
+          let tmpTotal = calcTotal(values);
+          if (Math.abs(tmpTotal - elValue) > 0.05) {
+            el.val(tmpTotal.toFixed(2));
           }
         }
         if ((index % 4) === 0) {
