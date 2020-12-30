@@ -92,7 +92,7 @@ class SuperForm extends FormBase {
 
     $table['actions']['add_year'] = [
       '#type' => 'button',
-      '#name' => 'addYear' . $table_num,
+      '#name' => 'addYear_' . $table_num,
       '#value' => $this->t('Add year'),
       '#submit' => ['::addOne'],
       '#ajax' => [
@@ -144,14 +144,14 @@ class SuperForm extends FormBase {
     else {
       $tables_count = count($tables_state);
     }
-
-    switch (substr($button, 0, -1)) {
+    $button = preg_split("/_/s", $button);
+    switch ($button[0]) {
       case 'addTable':
         $tables_count++;
         break;
 
       case 'addYear':
-        $table_to_add = substr($button, -1);
+        $table_to_add = $button[1];
     }
     for ($i = 1; $i <= $tables_count; $i++) {
       $years_list = isset($tables_state[$i]) ? array_keys($tables_state[$i]['rows']) : [date('Y')];
@@ -165,7 +165,7 @@ class SuperForm extends FormBase {
 
     $form['actions']['add_table'] = [
       '#type' => 'button',
-      '#name' => 'addTable1',
+      '#name' => 'addTable',
       '#value' => $this->t('Add table'),
       '#submit' => ['::addOne'],
       '#ajax' => [
