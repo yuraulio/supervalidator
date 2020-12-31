@@ -22,7 +22,7 @@ class SuperForm extends FormBase {
   }
 
   /**
-   * Build a header for a form table.
+   * Build a header for the form table.
    *
    * @return array
    *   An array with column titles.
@@ -112,10 +112,12 @@ class SuperForm extends FormBase {
     // Add fieldset wrapping each table to look good.
     $table = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Table #@table_number', ['@table_number' => $table_num]),
+      '#title' => $this->t('Table #@table_number', [
+        '@table_number' => $table_num,
+      ]),
     ];
 
-    // Element contains action butons. Just one in this case.
+    // Element contains action buttons. Just one in this case at the top.
     $table['actions'] = [
       '#type' => 'actions',
       '#weight' => -100,
@@ -149,9 +151,9 @@ class SuperForm extends FormBase {
 
     // Years rows.
     foreach ($years_list as $year_value) {
-      $table['rows'] += $this
-        ->buildYear($year_value, $table['rows']['#header']);
+      $table['rows'] += $this->buildYear($year_value, $table['rows']['#header']);
     }
+
     return $table;
   }
 
@@ -236,6 +238,9 @@ class SuperForm extends FormBase {
   /**
    * Submit handler for the add buttons of the form.
    *
+   * Just initiate the form rebuilding. All necessary parameters
+   * will be get in the ::buildForm method.
+   *
    * @param array $form
    *   An associative array containing the elements of the form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
@@ -291,7 +296,7 @@ class SuperForm extends FormBase {
               if ($completed) {
                 // If so, we have interrupted period. So set an error.
                 // These setting necessary to avoid empty form error
-                // cause loop will be broken and it will not be set.
+                // cause all of the loops will be broken and it will not be set.
                 $period_start = $start;
                 $period_end = $end;
                 $form_state->setError($form['tables'][$table_num]['rows'][$year][$i], 'Invalid!');

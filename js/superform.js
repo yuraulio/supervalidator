@@ -1,10 +1,10 @@
 // Handler on input values change to calculate quarter and year values
 // and not to allow adjust it more than 0.05.
 (function ($, Drupal) {
-  Drupal.behaviors.summary = {
+  Drupal.behaviors.calcSummary = {
     attach: function (context, settings) {
-      // Attach it to all inputs in the form.
-      $("#super_form tr td input").once('summary').on('change', function (event) {
+      // Attach it to all inputs in the tables.
+      $("#super_form tr td input").once('calcSummary').on('change', function (event) {
         let el = $(event.target); // The triggered input.
         let cell = el.parent().parent(); // The father cell of triggered element.
         let elValue = Number(el.val()); // The value of triggered input.
