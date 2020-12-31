@@ -1,8 +1,13 @@
 #super_form fieldset {
   overflow: scroll;
 }
+
 #super_form td input {
   width: 50px;
+}
+
+#super_form table tr th {
+  text-align: center;
 }
 
 #super_form tr td:nth-child(4n+5),
