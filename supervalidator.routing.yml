@@ -5,4 +5,3 @@ supervalidator.form:
     _title: 'Yuraul SuperForm'
   requirements:
     _permission: 'access content'
-
